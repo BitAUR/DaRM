@@ -1,0 +1,15 @@
+</div>
+
+<footer id="colophon">
+    <br>
+        Copyright &copy; 2024 - Now</a>
+    <br>
+    <a href="{{.BlogURI}}">{{.BlogAuthor}}</a> 运营 · <a href="https://darm.bitaur.com">DaRM</a> 驱动
+</footer>
+</div>
+{{ if eq .PageType "search" }}
+<script src="{{.BlogURI}}/res/js/search.js"></script>
+{{ else }}{{end}}
+<script src="{{.BlogURI}}/res/js/script.js"></script>
+</body>
+</html>

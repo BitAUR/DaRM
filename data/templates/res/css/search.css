@@ -1,0 +1,44 @@
+    #search-input {
+        width: 70%;
+        display: block;
+        margin: 0 auto;
+        box-sizing: border-box;
+        text-align: center;
+        border: 2px solid transparent;
+    }
+
+    #suggestions {
+        width: 70%;
+        display: block;
+        margin: 0 auto;
+        box-sizing: border-box;
+        text-align: center;
+        list-style-type: none;
+        padding: 0;
+        margin-top: 5px;
+        color:#333333; /* 亮色模式文本 */
+    }
+
+    #suggestions li {
+        padding: 10px;
+        cursor: pointer;
+        border-radius:4px;
+
+    }
+
+    #suggestions li:hover {
+        background-color: #EBEBEB;
+    }
+
+    /* 深色模式 */
+    @media (prefers-color-scheme: dark) {
+        #suggestions {
+            background-color: #333; /* 深色模式背景 */
+            color: white; /* 深色模式文本 */
+        }
+
+
+        #suggestions li:hover {
+            background-color: #444; /* 深色模式下鼠标悬停的背景颜色 */
+        }
+    }

@@ -100,7 +100,7 @@ func checkAndDownloadTheme(indexPath string) error {
 		fmt.Println("未找到主题，正在下载并解压主题...")
 
 		// 下载主题文件
-		zipURL := "https://github.com/BitAUR/darm-theme/releases/download/theme/theme.zip"
+		zipURL := "https://darm.bitaur.com/download/theme.zip"
 		resp, err := http.Get(zipURL)
 		if err != nil {
 			return fmt.Errorf("下载主题失败: %v", err)

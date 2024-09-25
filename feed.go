@@ -61,8 +61,7 @@ func formatPostDate(dateStr string) string {
 
 // feed生成时间的逻辑
 func formatCurrentTime() string {
-	loc, _ := time.LoadLocation("Asia/Shanghai")  // 获取 UTC+8 时区
-	now := time.Now().In(loc)                     // 获取当前时间并转换为 UTC+8
+	now := time.Now()                             // 获取当前本地时间
 	return now.Format("2006-01-02T15:04:05.000Z") // 格式化为所需格式
 }
 

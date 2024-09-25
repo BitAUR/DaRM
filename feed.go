@@ -1,57 +1,50 @@
-// feed.go
 package main
 
 import (
-	"encoding/xml"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
 type Feed struct {
-	XMLName   xml.Name `xml:"http://www.w3.org/2005/Atom feed"`
-	ID        string   `xml:"id"`
-	Title     string   `xml:"title"`
-	Updated   string   `xml:"updated"`
-	Generator string   `xml:"generator"`
-	Author    []Author `xml:"author"` // 支持多个作者
-	Links     []Link   `xml:"link"`   // 支持多个链接
-	Subtitle  string   `xml:"subtitle"`
-	Logo      string   `xml:"logo"`
-	Rights    string   `xml:"rights"` // 添加版权声明
-	Entries   []Entry  `xml:"entry"`
+	ID        string
+	Title     string
+	Updated   string
+	Generator string
+	Author    []Author
+	Links     []Link
+	Subtitle  string
+	Logo      string
+	Rights    string
+	Entries   []Entry
 }
 
 type Author struct {
-	Name string `xml:"name"`
-	URI  string `xml:"uri"`
+	Name string
+	URI  string
 }
 
 type Link struct {
-	Href string `xml:"href,attr"`
-	Rel  string `xml:"rel,attr,omitempty"` // 可选的 rel 属性
+	Href string
+	Rel  string
 }
 
 type Entry struct {
-	Title     string   `xml:"title"`
-	ID        string   `xml:"id"`
-	Link      Link     `xml:"link"`
-	Updated   string   `xml:"updated"`
-	Summary   Content  `xml:"summary"` // 这里使用 Content 结构体
-	Content   Content  `xml:"content"`
-	Category  Category `xml:"category"` // 类别
-	Published string   `xml:"published"`
-	Rights    string   `xml:"rights,omitempty"` // 可选的版权声明
-}
-
-type Content struct {
-	Text string `xml:",chardata"`
-	Type string `xml:"type,attr"` // 添加类型属性
+	Title     string
+	ID        string
+	Link      Link
+	Updated   string
+	Summary   string
+	Content   string
+	Category  Category
+	Published string
+	Rights    string
 }
 
 type Category struct {
-	Label string `xml:"label,attr"`
-	Term  string `xml:"term,attr"`
+	Label string
+	Term  string
 }
 
 // 文章时间的逻辑
@@ -61,54 +54,51 @@ func formatPostDate(dateStr string) string {
 
 // feed生成时间的逻辑
 func formatCurrentTime() string {
-	now := time.Now()                             // 获取当前本地时间
-	return now.Format("2006-01-02T15:04:05.000Z") // 格式化为所需格式
+	now := time.Now()
+	return now.Format("2006-01-02T15:04:05.000Z")
 }
 
 // 生成 Atom feed
 func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath string) error {
-	feed := Feed{
-		ID:        config.URI + "/",
-		Title:     config.Title,
-		Updated:   formatCurrentTime(),
-		Generator: "DaRM",
-		Author:    []Author{{Name: config.Author, URI: config.URI}},
-		Links: []Link{
-			{Href: config.URI, Rel: "alternate"},
-			{Href: config.URI + "/feed/", Rel: "self"},
-		},
-		Subtitle: config.Description,
-		Logo:     config.URI + "/res/image/logo.png",
-		Rights:   "Copyright © 2019 - Now " + config.Title, // 可选的版权声明
-	}
+	var builder strings.Builder
 
-	// 确保文章按日期排序，最新的在前
+	builder.WriteString(`<?xml version="1.0" encoding="utf-8"?>` + "\n")
+	builder.WriteString("<feed xmlns=\"http://www.w3.org/2005/Atom\">\n")
+	builder.WriteString("<id>" + config.URI + "/</id>\n")
+	builder.WriteString("<title>" + config.Title + "</title>\n")
+	builder.WriteString("<updated>" + formatCurrentTime() + "</updated>\n")
+	builder.WriteString("<generator>DaRM</generator>\n")
+	builder.WriteString("<author><name>" + config.Author + "</name><uri>" + config.URI + "</uri></author>\n")
+	builder.WriteString("<link href=\"" + config.URI + "\" rel=\"alternate\"/>\n")
+	builder.WriteString("<link href=\"" + config.URI + "/feed/\" rel=\"self\"/>\n")
+	builder.WriteString("<subtitle>" + config.Description + "</subtitle>\n")
+	builder.WriteString("<logo>" + config.URI + "/res/image/logo.png</logo>\n")
+	builder.WriteString("<rights>Copyright © 2019 - Now " + config.Title + "</rights>\n")
+
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].Date > posts[j].Date
 	})
 
-	// 选取最新的10篇文章
-	var latestPosts []PostMetadata
+	latestPosts := posts
 	if len(posts) > 10 {
 		latestPosts = posts[:10]
-	} else {
-		latestPosts = posts
 	}
 
 	for _, post := range latestPosts {
-		entry := Entry{
-			Title:     post.Title,
-			ID:        config.URI + "/" + post.URI + "/",
-			Link:      Link{Href: config.URI + "/" + post.URI + "/"},
-			Updated:   formatPostDate(post.Date),
-			Summary:   Content{Text: "<![CDATA[" + post.Description + "]]>", Type: "html"},
-			Content:   Content{Text: "<![CDATA[" + convertMarkdownToHTML(post.Content) + "]]>", Type: "html"},
-			Category:  Category{Label: post.Category, Term: post.Category},
-			Published: formatPostDate(post.Date),
-			Rights:    "Copyright © 2019 - Now " + config.Title, // 可选的版权声明
-		}
-		feed.Entries = append(feed.Entries, entry)
+		builder.WriteString("<entry>\n")
+		builder.WriteString("<title><![CDATA[" + post.Title + "]]></title>\n")
+		builder.WriteString("<id>" + config.URI + "/" + post.URI + "/</id>\n")
+		builder.WriteString("<link href=\"" + config.URI + "/" + post.URI + "/\"/>\n")
+		builder.WriteString("<updated>" + formatPostDate(post.Date) + "</updated>\n")
+		builder.WriteString("<summary type=\"html\"><![CDATA[" + post.Description + "]]></summary>\n")
+		builder.WriteString("<content type=\"html\"><![CDATA[" + convertMarkdownToHTML(post.Content) + "]]></content>\n")
+		builder.WriteString("<category label=\"" + post.Category + "\" term=\"" + post.Category + "\"/>\n")
+		builder.WriteString("<published>" + formatPostDate(post.Date) + "</published>\n")
+		builder.WriteString("<rights>Copyright © 2019 - Now " + config.Title + "</rights>\n")
+		builder.WriteString("</entry>\n")
 	}
+
+	builder.WriteString("</feed>")
 
 	file, err := os.Create(outputPath)
 	if err != nil {
@@ -116,17 +106,6 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 	}
 	defer file.Close()
 
-	// 写入 XML 声明
-	_, err = file.WriteString(`<?xml version="1.0" encoding="utf-8"?>` + "\n")
-	if err != nil {
-		return err
-	}
-
-	encoder := xml.NewEncoder(file)
-	encoder.Indent("", "  ")
-	if err := encoder.Encode(feed); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = file.WriteString(builder.String())
+	return err
 }

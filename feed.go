@@ -1,3 +1,4 @@
+// feed.go
 package main
 
 import (
@@ -17,8 +18,7 @@ type Feed struct {
 	Links     []Link   `xml:"link"`   // 支持多个链接
 	Subtitle  string   `xml:"subtitle"`
 	Logo      string   `xml:"logo"`
-	Icon      string   `xml:"icon,omitempty"` // 添加图标
-	Rights    string   `xml:"rights"`         // 添加版权声明
+	Rights    string   `xml:"rights"` // 添加版权声明
 	Entries   []Entry  `xml:"entry"`
 }
 
@@ -33,7 +33,7 @@ type Link struct {
 }
 
 type Entry struct {
-	Title     Content  `xml:"title"` // 使用 Content 以支持 CDATA
+	Title     string   `xml:"title"`
 	ID        string   `xml:"id"`
 	Link      Link     `xml:"link"`
 	Updated   string   `xml:"updated"`
@@ -51,7 +51,7 @@ type Content struct {
 
 type Category struct {
 	Label string `xml:"label,attr"`
-	Term  string `xml:"term,attr,omitempty"` // 可选的 term 属性
+	Term  string `xml:"term,attr"`
 }
 
 // 文章时间的逻辑
@@ -79,8 +79,7 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 		},
 		Subtitle: config.Description,
 		Logo:     config.URI + "/res/image/logo.png",
-		Icon:     config.URI + "/res/image/logo.png", // 添加 favicon 链接
-		Rights:   "Copyright © 2019 - Now " + config.Title,
+		Rights:   "Copyright © 2019 - Now " + config.Title, // 可选的版权声明
 	}
 
 	// 确保文章按日期排序，最新的在前
@@ -98,7 +97,7 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 
 	for _, post := range latestPosts {
 		entry := Entry{
-			Title:     Content{Text: "<![CDATA[" + post.Title + "]]>", Type: "html"},
+			Title:     post.Title,
 			ID:        config.URI + "/" + post.URI + "/",
 			Link:      Link{Href: config.URI + "/" + post.URI + "/"},
 			Updated:   formatPostDate(post.Date),
@@ -106,7 +105,7 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 			Content:   Content{Text: "<![CDATA[" + convertMarkdownToHTML(post.Content) + "]]>", Type: "html"},
 			Category:  Category{Label: post.Category, Term: post.Category},
 			Published: formatPostDate(post.Date),
-			Rights:    "Copyright © 2019 - Now " + config.Title,
+			Rights:    "Copyright © 2019 - Now " + config.Title, // 可选的版权声明
 		}
 		feed.Entries = append(feed.Entries, entry)
 	}
@@ -116,6 +115,12 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 		return err
 	}
 	defer file.Close()
+
+	// 写入 XML 声明
+	_, err = file.WriteString(`<?xml version="1.0" encoding="utf-8"?>` + "\n")
+	if err != nil {
+		return err
+	}
 
 	encoder := xml.NewEncoder(file)
 	encoder.Indent("", "  ")

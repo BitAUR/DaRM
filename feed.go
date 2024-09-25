@@ -29,12 +29,23 @@ type Entry struct {
 	Summary     string `xml:"summary"`
 }
 
+// 文章时间的逻辑
+func formatPostDate(dateStr string) string {
+	return dateStr + "T20:00:00.000Z"
+}
+
+// feed生成时间的逻辑
+func formatCurrentTime() string {
+	now := time.Now().UTC()                       // 获取当前时间并转换为 UTC
+	return now.Format("2006-01-02T15:04:05.000Z") // 格式化为所需格式
+}
+
 // 生成 Atom feed
 func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath string) error {
 	feed := Feed{
 		Title:       config.Title,
 		Link:        config.URI + "/feed/",
-		Updated:     time.Now().Format(time.RFC3339),
+		Updated:     formatCurrentTime(),
 		Author:      config.Author,
 		ID:          config.URI + "/",
 		Description: config.Description,
@@ -60,7 +71,7 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 			Title:       post.Title,
 			Link:        config.URI + "/" + post.URI + "/",
 			ID:          config.URI + "/" + post.URI + "/",
-			Updated:     post.Date,
+			Updated:     formatPostDate(post.Date), // 调用新函数处理日期
 			Description: post.Description,
 			Summary:     convertMarkdownToHTML(post.Content),
 		}

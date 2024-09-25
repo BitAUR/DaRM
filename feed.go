@@ -86,7 +86,7 @@ func generateAtomFeed(posts []PostMetadata, config *BlogConfig, outputPath strin
 
 	for _, post := range latestPosts {
 		builder.WriteString("<entry>\n")
-		builder.WriteString("<title><![CDATA[" + post.Title + "]]></title>\n")
+		builder.WriteString("<title type=\"html\"><![CDATA[" + post.Title + "]]></title>\n")
 		builder.WriteString("<id>" + config.URI + "/" + post.URI + "/</id>\n")
 		builder.WriteString("<link href=\"" + config.URI + "/" + post.URI + "/\"/>\n")
 		builder.WriteString("<updated>" + formatPostDate(post.Date) + "</updated>\n")

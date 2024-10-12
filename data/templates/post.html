@@ -17,7 +17,7 @@
             <div class="post-tags">
                 <span class="meta-text">
                     {{ range $index, $tag := .TagsArray }}
-                    <a href="{{$.BlogURI}}/tags/{{ . | urlquery }}/" rel="tag"># {{ . }}</a>
+                    <a href="{{$.BlogURI}}/tags/{{ . }}/" rel="tag"># {{ . }}</a>
                     {{ end }}
                 </span>
             </div>
